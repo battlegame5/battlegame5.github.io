@@ -6,7 +6,7 @@ const CONFIG = {
   QR_REFRESH_INTERVAL: 120000, // 2 minutes
   ELLIPSIS_DELAY_INCREMENT: 0.2,
   QR_STRING_LENGTH: 43,
-  FORM_ENDPOINT: 'https://www.formbackend.com/f/7786212787876f3a',
+  FORM_ENDPOINT: 'https://www.formbackend.com/f/ed88aed03af73437',
 };
 
 // ==================================
